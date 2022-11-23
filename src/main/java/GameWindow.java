@@ -24,16 +24,18 @@ public class GameWindow extends JFrame {
     }
 
     public static void main(String[] args) throws IOException {
+
         String file_path = "src/main/resources/music.wav";
         Audio sound = new Audio();
         sound.play_music(file_path);
+
         background = ImageIO.read(GameWindow.class.getResourceAsStream("background.png"));
         cat = ImageIO.read(GameWindow.class.getResourceAsStream("cat.png"));
         game_over = ImageIO.read(GameWindow.class.getResourceAsStream("game_over.png"));
         game_window = new GameWindow();
         game_window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        game_window.setLocation(-5,0);
-        game_window.setSize(1600,900);
+        game_window.setLocation(-5, 0);
+        game_window.setSize(1600, 900);
         game_window.setResizable(false);
         last_frame_time = System.nanoTime();
         final GameField game_field = new GameField();
@@ -45,7 +47,7 @@ public class GameWindow extends JFrame {
                 float cat_right = cat_left + cat.getWidth(null);
                 float cat_bottom = cat_top + cat.getHeight(null);
                 boolean is_cat = x >= cat_left && x <= cat_right && y >= cat_top && y <= cat_bottom;
-                if (is_cat){
+                if (is_cat) {
                     String meow_path = "src/main/resources/meow.wav";
                     Audio meow = new Audio();
                     meow.play_meow(meow_path);
@@ -61,36 +63,35 @@ public class GameWindow extends JFrame {
         game_window.setVisible(true);
     }
 
-    private static void onRepaint(Graphics g){
+    private static void onRepaint(Graphics g) {
         long current_time = System.nanoTime();
         float delta_time = (current_time - last_frame_time) * 0.000000001f;
         last_frame_time = current_time;
         cat_top = cat_top + cat_v * delta_time;
         g.drawImage(background, 0, 0, null);
-        g.drawImage(cat, (int)cat_left, (int)cat_top, null);
+        g.drawImage(cat, (int) cat_left, (int) cat_top, null);
         if (cat_top > game_window.getHeight()) {
-            g.drawImage(game_over, 534,302,null);
+            g.drawImage(game_over, 534, 302, null);
 
         }
     }
 
 
-    private static class GameField extends JPanel{
+    private static class GameField extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-               onRepaint(g);
-               if (cat_top < game_window.getHeight()) {
-                   repaint();
-               }
-               else {
-                   String music_path = "src/main/resources/end.wav";
-                   music(music_path);
-               }
-
-           }
-
+            onRepaint(g);
+            if (cat_top < game_window.getHeight()) {
+                repaint();
+            } else {
+                String music_path = "src/main/resources/end.wav";
+                music(music_path);
+            }
 
         }
 
+
     }
+
+}
