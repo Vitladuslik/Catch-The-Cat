@@ -1,13 +1,19 @@
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 
 public class GameWindow extends JFrame {
 
+    private static boolean isOver;
     private static GameWindow game_window;
     private static long last_frame_time;
     private static Image background;
@@ -18,20 +24,24 @@ public class GameWindow extends JFrame {
     private static float cat_v = 200;
     private static int score = 0;
 
-    private static void music(String music_path) {
-        Audio end = new Audio();
-        end.play_end(music_path);
-    }
+    public static void main(String[] args) throws IOException, InterruptedException {
 
-    public static void main(String[] args) throws IOException {
+        System.out.println(Thread.currentThread().getName() + " start main");
 
-        String file_path = "src/main/resources/music.wav";
-        Audio sound = new Audio();
-        sound.play_music(file_path);
 
-        background = ImageIO.read(GameWindow.class.getResourceAsStream("background.png"));
-        cat = ImageIO.read(GameWindow.class.getResourceAsStream("cat.png"));
-        game_over = ImageIO.read(GameWindow.class.getResourceAsStream("game_over.png"));
+        Thread bgMusic = new Thread(() -> {
+            System.out.println(Thread.currentThread().getName() + " start bg music");
+            String file_path = "src/main/resources/music.wav";
+            play(file_path);
+            System.out.println(Thread.currentThread().getName() + " finish bg music");
+        });
+        bgMusic.start();
+
+        isOver = false;
+
+        background = ImageIO.read(Objects.requireNonNull(GameWindow.class.getResourceAsStream("background.png")));
+        cat = ImageIO.read(Objects.requireNonNull(GameWindow.class.getResourceAsStream("cat.png")));
+        game_over = ImageIO.read(Objects.requireNonNull(GameWindow.class.getResourceAsStream("game_over.png")));
         game_window = new GameWindow();
         game_window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         game_window.setLocation(-5, 0);
@@ -49,8 +59,7 @@ public class GameWindow extends JFrame {
                 boolean is_cat = x >= cat_left && x <= cat_right && y >= cat_top && y <= cat_bottom;
                 if (is_cat) {
                     String meow_path = "src/main/resources/meow.wav";
-                    Audio meow = new Audio();
-                    meow.play_meow(meow_path);
+                    play(meow_path);
                     cat_top = -200;
                     cat_left = (int) (Math.random() * (game_field.getWidth() - cat.getWidth(null)));
                     cat_v = cat_v + 20;
@@ -61,6 +70,19 @@ public class GameWindow extends JFrame {
         });
         game_window.add(game_field);
         game_window.setVisible(true);
+
+        while (!isOver) {
+            Thread.sleep(10);
+        }
+
+        String end_music_path = "src/main/resources/end.wav";
+        playEnd(end_music_path);
+
+        Thread.sleep(5000);
+
+        System.out.println(Thread.currentThread().getName() + " finish main");
+
+        System.exit(1488);
     }
 
     private static void onRepaint(Graphics g) {
@@ -72,12 +94,13 @@ public class GameWindow extends JFrame {
         g.drawImage(cat, (int) cat_left, (int) cat_top, null);
         if (cat_top > game_window.getHeight()) {
             g.drawImage(game_over, 534, 302, null);
-
         }
+
     }
 
 
     private static class GameField extends JPanel {
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -85,13 +108,51 @@ public class GameWindow extends JFrame {
             if (cat_top < game_window.getHeight()) {
                 repaint();
             } else {
-                String music_path = "src/main/resources/end.wav";
-                music(music_path);
+                isOver = true;
+                Thread.currentThread().interrupt();
             }
 
         }
 
 
+    }
+
+    private static void play(String music_location) {
+        try {
+            File music_path = new File(music_location);
+            if (music_path.exists()) {
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(music_path);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioInput);
+                clip.start();
+                while (!isOver) {
+                    Thread.sleep(10);
+                }
+                clip.stop();
+                Thread.currentThread().interrupt();
+
+            } else {
+                System.out.println("Не удается найти файл!");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private static void playEnd(String music_location) {
+        try {
+            File music_path = new File(music_location);
+            if (music_path.exists()) {
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(music_path);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioInput);
+                clip.start();
+            } else {
+                System.out.println("Не удается найти файл!");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
 }
